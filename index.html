@@ -235,6 +235,22 @@
 
   footer { margin-top: auto; padding: 24px 0 0; text-align: center; width: 100% }
   footer p { font-size: 12px; color: #4a3d70; line-height: 1.6 }
+  .bmc-btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 16px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1a1a2e;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    text-decoration: none;
+    text-align: center;
+    transition: all .2s;
+    box-shadow: 0 3px 16px rgba(251, 191, 36, .25);
+  }
+  .bmc-btn:active { transform: scale(.95) }
 
   .hidden { display: none !important }
 </style>
@@ -293,6 +309,7 @@
       <button id="share-btn" class="btn btn-share">シェア</button>
       <button id="download-btn" class="btn btn-primary">保存</button>
     </div>
+    <a href="https://buymeacoffee.com/mizoijin" target="_blank" rel="noopener" class="bmc-btn">☕ 気に入ったら応援してね！</a>
   </div>
 
   <footer>
@@ -681,7 +698,7 @@ $('download-btn').addEventListener('click', async () => {
   try {
     const blob = await toBlob()
     const file = toFile(blob)
-    if (navigator.share?.({ files: [file] }) && navigator.canShare?.({ files: [file] })) {
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
       await navigator.share({ files: [file], title: 'Space Cat' })
       return
     }
