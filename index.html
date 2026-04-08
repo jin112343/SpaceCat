@@ -647,22 +647,20 @@ $('flip-btn').addEventListener('click', () => { flipped = !flipped; scheduleRend
    画像処理（リサイズ → 背景除去 → 合成）
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-/** モバイルOOM対策：大きい画像を縮小＋JPEG圧縮 */
+/** モバイルOOM対策：大きい画像を縮小（PNG維持で画質保持） */
 function shrink(file, maxDim) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const needsResize = img.width > maxDim || img.height > maxDim
-      const tooBig = file.size > 2 * 1024 * 1024  // 2MB以上は圧縮
-      if (!needsResize && !tooBig) return resolve(file)
-      const s = needsResize ? maxDim / Math.max(img.width, img.height) : 1
+      if (img.width <= maxDim && img.height <= maxDim) return resolve(file)
+      const s = maxDim / Math.max(img.width, img.height)
       const c = document.createElement('canvas')
       c.width = Math.round(img.width * s)
       c.height = Math.round(img.height * s)
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
-      c.toBlob(b => b ? resolve(b) : reject(new Error('リサイズ失敗')), 'image/jpeg', 0.8)
+      c.toBlob(b => b ? resolve(b) : reject(new Error('リサイズ失敗')), 'image/png')
     }
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('画像読み込み失敗')) }
     img.src = url
@@ -689,7 +687,7 @@ async function processImage(file) {
   try {
     progressText.textContent = '画像を準備中...'
     progressBar.style.width = '10%'
-    const resized = await shrink(file, 900)
+    const resized = await shrink(file, 1024)
 
     progressText.textContent = '背景除去中...（初回は少し時間がかかります）'
     const blob = await removeBackground(resized, {
