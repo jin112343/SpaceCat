@@ -535,9 +535,8 @@ function render() {
   if (!img) return
 
   if (!canvasSized) {
-    const maxW = Math.min(img.width, 1280)
-    canvas.width = maxW
-    canvas.height = Math.round(maxW * 9 / 16)
+    canvas.width = 1280
+    canvas.height = 720
     canvasSized = true
   }
 
@@ -689,7 +688,7 @@ async function processImage(file) {
   try {
     progressText.textContent = '画像を準備中...'
     progressBar.style.width = '10%'
-    const resized = await shrink(file, 768)
+    const resized = await shrink(file, 900)
 
     progressText.textContent = '背景除去中...（初回は少し時間がかかります）'
     const blob = await removeBackground(resized, {
