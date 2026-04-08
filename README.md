@@ -1,48 +1,39 @@
-# Space Cat
+# Space Cat - 宇宙猫ジェネレーター
 
-写真から「宇宙猫」風の画像を作れるWebアプリ。
+写真を選ぶだけで「宇宙猫」画像が作れるWebアプリ。
 
-背景をAIで自動除去し、プロシージャル生成の宇宙背景と合成します。すべてブラウザ内で完結、サーバーへの画像送信は一切ありません。
+![サンプル](public/sample.png)
 
-## 機能
-
-- 写真アップロード → AI背景除去 → 宇宙背景と合成
-- 4種類の宇宙背景（ディープ / パープル / ウォーム / オーロラ）
-- 自分の画像をカスタム背景として追加可能
-- ドラッグで位置調整 / スライダーでサイズ・回転を変更
-- ピンチズーム・ピンチ回転（モバイル対応）
-- 左右反転
-- 画像保存・シェア・Xへのポスト（#SpaceCat）
-
-## 技術スタック
-
-- HTML / CSS / JavaScript（単一HTMLファイル）
-- [@imgly/background-removal](https://github.com/imgly/background-removal-js) — ブラウザ上でのAI背景除去（CDN経由）
-- Canvas 2D API — プロシージャル宇宙背景生成 & 画像合成
+**[使ってみる →](https://jin112343.github.io/SpaceCat/)**
 
 ## 使い方
 
-`index.html` をローカルサーバー経由でブラウザで開いてください。
+1. 写真を選ぶ
+2. AIが自動で背景除去
+3. 宇宙背景と合成
+4. 保存・シェア
+
+## 特徴
+
+- ブラウザ完結（サーバーに画像を送信しません）
+- スマホ対応（ピンチズーム・回転）
+- 登録不要・完全無料
+- サイズ・回転・切抜き調整
+- X（Twitter）に画像付きシェア
+
+## 開発
 
 ```bash
 npx serve .
 ```
 
-> **Note:** `@imgly/background-removal` はES Module（CDN）で読み込むため、`file://` プロトコルでは動作しません。
+> `file://` では動作しません（ES Module CDNインポートのため）
 
-## 宇宙背景について
+## リンク
 
-背景はすべてCanvas 2Dで手続き的に生成されています：
-
-| 背景 | 特徴 |
-|------|------|
-| ディープ | 深宇宙の星雲 + 暖色系ブライトスター |
-| パープル | 紫〜マゼンタの星雲 |
-| ウォーム | オレンジ×ブルーの対比 |
-| オーロラ | 緑のオーロラカーテン |
-
-背景はオフスクリーンCanvasにキャッシュされ、被写体のドラッグ時に再生成されません。
+- [アプリを使う](https://jin112343.github.io/SpaceCat/)
+- [応援する（Buy Me a Coffee）](https://buymeacoffee.com/mizoijin)
 
 ## ライセンス
 
-本プロジェクトは [@imgly/background-removal](https://github.com/imgly/background-removal-js) (AGPL-3.0) を使用しているため、ソースコードを公開しています。
+AGPL-3.0-only（[@imgly/background-removal](https://github.com/imgly/background-removal-js) の要件に準拠）

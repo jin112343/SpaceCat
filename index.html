@@ -43,6 +43,31 @@
 
   .sub { font-size: 12px; color: #8878b0; margin-top: -8px }
 
+  /* サンプル表示 */
+  .sample-section {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+  .sample-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 16px;
+  }
+  .sample-text {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.8);
+  }
+
   /* アップロードエリア */
   .upload-area {
     width: 100%;
@@ -260,6 +285,11 @@
   <h1> SPACE CAT</h1>
   <p class="sub">宇宙猫ジェネレーター</p>
 
+  <div class="sample-section" id="sample-section">
+    <img src="public/sample.png" alt="宇宙猫サンプル" class="sample-img">
+    <p class="sample-text">写真を選ぶだけ</p>
+  </div>
+
   <div id="upload-area" class="upload-area">
     <input type="file" id="file-input" accept="image/*" hidden>
     <div class="placeholder">
@@ -294,7 +324,7 @@
     </div>
     <div class="slider-row">
       <label for="alpha-slider">切抜き</label>
-      <input type="range" id="alpha-slider" min="0" max="255" step="1" value="0">
+      <input type="range" id="alpha-slider" min="0" max="128" step="1" value="0">
     </div>
     <p id="hint-text" class="hint-text"></p>
     <div class="edit-tools">
@@ -630,6 +660,7 @@ function shrink(file, maxDim) {
 function showPhase(phase) {
   const upload = phase === 'upload'
   const edit = phase === 'edit'
+  $('sample-section').classList.toggle('hidden', !upload)
   uploadArea.classList.toggle('hidden', !upload)
   bgSection.classList.toggle('hidden', !upload)
   bgsEl.classList.toggle('hidden', !upload)
