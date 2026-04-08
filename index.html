@@ -686,7 +686,7 @@ async function processImage(file) {
   try {
     progressText.textContent = '画像を準備中...'
     progressBar.style.width = '10%'
-    const resized = await shrink(file, 1024)
+    const resized = await shrink(file, 768)
 
     progressText.textContent = '背景除去中...（初回は少し時間がかかります）'
     const blob = await removeBackground(resized, {
@@ -717,13 +717,13 @@ async function processImage(file) {
   } catch (err) {
     console.error(err)
     const msg = err?.message ?? ''
-    if (msg.includes('memory') || msg.includes('alloc'))
+    if (msg.includes('memory') || msg.includes('alloc') || msg.includes('size'))
       progressText.textContent = 'メモリ不足です。小さい画像でお試しください。'
     else if (msg.includes('network') || msg.includes('fetch'))
       progressText.textContent = 'ネットワークエラーです。接続を確認してください。'
     else
-      progressText.textContent = 'エラーが発生しました。もう一度お試しください。'
-    setTimeout(() => showPhase('upload'), 2500)
+      progressText.textContent = '処理に失敗しました。別の画像でお試しください。'
+    setTimeout(() => showPhase('upload'), 3000)
   }
 }
 
