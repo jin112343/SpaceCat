@@ -340,6 +340,7 @@
     <div class="edit-tools">
       <button id="flip-btn" class="btn-icon">↔ 反転</button>
       <button id="reset-btn" class="btn-icon">🔄 リセット</button>
+      <button id="back-btn" class="btn-icon">🔙 別の画像</button>
     </div>
     <div class="output-actions">
       <button id="tweet-btn" class="btn btn-tweet">
@@ -803,12 +804,20 @@ function toast(message) {
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300) }, 2000)
 }
 
+/* 位置・サイズをリセット（画像はそのまま） */
 $('reset-btn').addEventListener('click', () => {
-  if (!confirm('やり直しますか？')) return
-  被写体 = null
   posX = .5; posY = .55; scale = .85; rotation = 0; flipped = false; alphaThreshold = 0
   scaleSlider.value = '0.85'; rotSlider.value = '0'; alphaSlider.value = '0'
-  fileInput.value = ''; canvasSized = false; 原画 = null
+  scheduleRender()
+  toast('リセットしました')
+})
+
+/* 別の画像を選び直す */
+$('back-btn').addEventListener('click', () => {
+  被写体 = null; 原画 = null
+  posX = .5; posY = .55; scale = .85; rotation = 0; flipped = false; alphaThreshold = 0
+  scaleSlider.value = '0.85'; rotSlider.value = '0'; alphaSlider.value = '0'
+  fileInput.value = ''; canvasSized = false
   showPhase('upload')
 })
 </script>
