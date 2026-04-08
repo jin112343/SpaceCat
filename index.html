@@ -728,8 +728,18 @@ $('share-btn').addEventListener('click', async () => {
   } catch (e) { if (e.name !== 'AbortError') console.error(e) }
 })
 
-$('tweet-btn').addEventListener('click', () => {
-  window.open(`https://x.com/intent/post?text=${encodeURIComponent('宇宙猫つくった！🌌\n\n#SpaceCat')}`, '_blank')
+$('tweet-btn').addEventListener('click', async () => {
+  const tweetText = '宇宙猫つくった！🌌\n\n#SpaceCat\nhttps://jin112343.github.io/SpaceCat/'
+  try {
+    const blob = await toBlob()
+    const file = toFile(blob)
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], text: tweetText })
+      return
+    }
+  } catch (e) { if (e.name === 'AbortError') return }
+  /* Web Share非対応の場合はintent URLで開く */
+  window.open(`https://x.com/intent/post?text=${encodeURIComponent(tweetText)}`, '_blank')
 })
 
 
