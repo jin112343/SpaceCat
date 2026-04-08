@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Space Cat - 宇宙猫ジェネレーター</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪐</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #030014;
+    color: #ddd;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px calc(40px + env(safe-area-inset-bottom, 0px));
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 24px;
+    background: linear-gradient(135deg, #a78bfa, #f472b6, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+  }
+
+  .sub { font-size: 12px; color: #8878b0; margin-top: -8px }
+
+  /* アップロードエリア */
+  .upload-area {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    border: 2px dashed rgba(167, 139, 250, .35);
+    background: rgba(20, 10, 40, .5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .upload-area:hover { border-color: #a78bfa; background: rgba(167, 139, 250, .08) }
+  .upload-area:active { transform: scale(.98) }
+
+  .placeholder { text-align: center; color: #8878b0; pointer-events: none }
+  .placeholder .icon { font-size: 48px; display: block; margin-bottom: 8px }
+  .placeholder .main { font-size: 14px; font-weight: 700 }
+  .placeholder .hint { font-size: 11px; color: #5a4d80; margin-top: 4px }
+
+  /* プレビュー */
+  .preview-section {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: #0a0520;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-section canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    touch-action: none;
+    border-radius: 16px;
+  }
+
+  /* 処理中オーバーレイ */
+  .processing {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(167, 139, 250, .2);
+    border-top-color: #a78bfa;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .processing p { color: #c4b5fd; font-size: 14px }
+  .bar { width: 60%; height: 4px; border-radius: 2px; background: rgba(167, 139, 250, .15); overflow: hidden }
+  .bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #7c3aed, #f472b6); width: 0; transition: width .3s }
+
+  /* 背景セレクター */
+  .sect {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: #7c6aad;
+    letter-spacing: 2px;
+    width: 100%;
+    margin-bottom: -8px;
+  }
+  .bgs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100% }
+  .bg-card {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: .2s;
+    background: #111;
+  }
+  .bg-card:hover { transform: scale(1.04) }
+  .bg-card:active { transform: scale(.96) }
+  .bg-card.on { border-color: #a78bfa; box-shadow: 0 0 14px rgba(167, 139, 250, .35) }
+  .bg-card canvas, .bg-card img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 10px }
+  .bg-card .nm {
+    position: absolute;
+    bottom: 3px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    color: #fff;
+    text-shadow: 0 1px 5px #000, 0 0 3px #000;
+    z-index: 1;
+  }
+
+
+  /* コントロール */
+  .controls { display: flex; flex-direction: column; gap: 6px; width: 100% }
+  .slider-row { display: flex; align-items: center; gap: 8px }
+  .slider-row label { font-size: 12px; color: #6b5b95; white-space: nowrap; width: 40px }
+  .slider-row input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 32px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .slider-row input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: rgba(167, 139, 250, .15); border-radius: 2px }
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #a78bfa;
+    border-radius: 50%;
+    border: none;
+    margin-top: -8px;
+    box-shadow: 0 1px 6px rgba(124, 58, 237, .4);
+  }
+  .slider-row input[type="range"]::-moz-range-track { height: 4px; background: rgba(167, 139, 250, .15); border-radius: 2px; border: none }
+  .slider-row input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #a78bfa;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 1px 6px rgba(124, 58, 237, .4);
+  }
+
+  .hint-text { font-size: 11px; color: #5a4d80; text-align: center; margin: 2px 0 }
+
+  .edit-tools { display: flex; gap: 8px }
+  .btn-icon {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(167, 139, 250, .08);
+    color: #8878b0;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-icon:active { transform: scale(.92); background: rgba(167, 139, 250, .18) }
+
+  .output-actions { display: flex; gap: 8px; margin-top: 4px }
+  .btn {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:active { transform: scale(.95) }
+  .btn-tweet { background: #000; color: #fff; border: 1px solid #333 }
+  .btn-share { background: linear-gradient(135deg, #7c3aed, #a78bfa); color: #fff }
+  .btn-primary { background: linear-gradient(135deg, #fbbf24, #f472b6); color: #1a1a2e; box-shadow: 0 3px 16px rgba(244, 114, 182, .25) }
+
+  /* トースト通知 */
+  .toast {
+    position: fixed;
+    bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(167, 139, 250, .95);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0) }
+
+  footer { margin-top: auto; padding: 24px 0 0; text-align: center; width: 100% }
+  footer p { font-size: 12px; color: #4a3d70; line-height: 1.6 }
+
+  .hidden { display: none !important }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1> SPACE CAT</h1>
+  <p class="sub">宇宙猫ジェネレーター</p>
+
+  <div id="upload-area" class="upload-area">
+    <input type="file" id="file-input" accept="image/*" hidden>
+    <div class="placeholder">
+      <span class="icon">🪐</span>
+      <div class="main">タップして画像を選択</div>
+      <div class="hint">PNG / JPG</div>
+    </div>
+  </div>
+
+  <div id="bg-section">
+    <div class="sect">🌌 BACKGROUND</div>
+  </div>
+  <div class="bgs" id="bgs"></div>
+
+  <div id="preview-section" class="preview-section hidden">
+    <canvas id="canvas"></canvas>
+    <div id="processing" class="processing hidden">
+      <div class="spinner"></div>
+      <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+      <p id="processing-text">背景除去中...</p>
+    </div>
+  </div>
+
+  <div id="controls" class="controls hidden">
+    <div class="slider-row">
+      <label for="scale-slider">サイズ</label>
+      <input type="range" id="scale-slider" min="0.05" max="3" step="0.05" value="0.85">
+    </div>
+    <div class="slider-row">
+      <label for="rotation-slider">回転</label>
+      <input type="range" id="rotation-slider" min="-180" max="180" step="1" value="0">
+    </div>
+    <p id="hint-text" class="hint-text"></p>
+    <div class="edit-tools">
+      <button id="flip-btn" class="btn-icon">↔ 反転</button>
+      <button id="reset-btn" class="btn-icon">🔄 リセット</button>
+    </div>
+    <div class="output-actions">
+      <button id="tweet-btn" class="btn btn-tweet">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        ポスト
+      </button>
+      <button id="share-btn" class="btn btn-share">シェア</button>
+      <button id="download-btn" class="btn btn-primary">💾 保存</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>🔒 すべての処理はお使いの端末内で完結します</p>
+  </footer>
+</div>
+
+<script type="module">
+import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.13/+esm'
+
+/* ━━━ 状態管理 ━━━ */
+let 被写体 = null       // 背景除去済みの画像
+let 選択中BG = 0        // 選択中の背景インデックス
+let posX = 0.5          // 被写体の水平位置（0〜1）
+let posY = 0.55         // 被写体の垂直位置（0〜1）
+let scale = 0.85        // 被写体の拡大率
+let rotation = 0        // 被写体の回転角度（度）
+let flipped = false     // 左右反転フラグ
+
+/* ━━━ DOM要素 ━━━ */
+const $ = id => document.getElementById(id)
+const canvas       = $('canvas')
+const ctx          = canvas.getContext('2d')
+const uploadArea   = $('upload-area')
+const fileInput    = $('file-input')
+const bgSection    = $('bg-section')
+const bgsEl        = $('bgs')
+const preview      = $('preview-section')
+const processing   = $('processing')
+const progressText = $('processing-text')
+const progressBar  = $('bar-fill')
+const controls     = $('controls')
+const scaleSlider  = $('scale-slider')
+const rotSlider    = $('rotation-slider')
+const hintText     = $('hint-text')
+
+/* デバイスに応じた操作ヒント */
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+hintText.textContent = isTouch ? 'スライドで位置調整・ピンチでサイズ変更' : 'ドラッグで位置調整'
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   宇宙背景（フリー素材画像）
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const 背景一覧 = [
+  { name: '星雲', src: 'public/bg-deep.jpg' },
+  { name: '宇宙', src: 'public/bg-space.jpg' },
+]
+
+/** 全背景画像をプリロード */
+async function loadBgImages() {
+  const promises = 背景一覧.map(bg => new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => { bg.img = img; resolve() }
+    img.onerror = reject
+    img.src = bg.src
+  }))
+  await Promise.all(promises)
+}
+loadBgImages()
+
+/** 背景を指定サイズでCanvas上に描画（cover表示） */
+function renderBg(w, h) {
+  const bg = 背景一覧[選択中BG]
+  if (!bg.img) return null
+
+  const off = document.createElement('canvas')
+  off.width = w; off.height = h
+  const oc = off.getContext('2d')
+  const bi = bg.img
+  const br = bi.width / bi.height, fr = w / h
+  let sx, sy, sw, sh
+  if (br > fr) { sh = bi.height; sw = sh * fr; sx = (bi.width - sw) / 2; sy = 0 }
+  else { sw = bi.width; sh = sw / fr; sx = 0; sy = (bi.height - sh) / 2 }
+  oc.drawImage(bi, sx, sy, sw, sh, 0, 0, w, h)
+  return off
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   背景選択UI
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+function buildBgGrid() {
+  bgsEl.replaceChildren()
+  背景一覧.forEach((bg, i) => {
+    const card = document.createElement('div')
+    card.className = 'bg-card' + (i === 選択中BG ? ' on' : '')
+
+    const thumb = document.createElement('img')
+    thumb.src = bg.src
+    thumb.alt = bg.name
+    card.appendChild(thumb)
+
+    const label = document.createElement('div')
+    label.className = 'nm'
+    label.textContent = bg.name
+    card.appendChild(label)
+
+    card.addEventListener('click', () => {
+      選択中BG = i
+      document.querySelectorAll('.bg-card').forEach(c => c.classList.remove('on'))
+      card.classList.add('on')
+      if (被写体) scheduleRender()
+    })
+    bgsEl.appendChild(card)
+  })
+}
+buildBgGrid()
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   画像アップロード
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+uploadArea.addEventListener('click', () => fileInput.click())
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files?.[0]
+  if (file) processImage(file)
+})
+
+/* ドラッグ&ドロップ */
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#a78bfa' })
+uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = '' })
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault()
+  uploadArea.style.borderColor = ''
+  const file = e.dataTransfer?.files[0]
+  if (file?.type.startsWith('image/')) processImage(file)
+})
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   描画（requestAnimationFrame で間引き）
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+let renderQueued = false
+let canvasSized = false
+
+function scheduleRender() {
+  if (renderQueued) return
+  renderQueued = true
+  requestAnimationFrame(() => {
+    renderQueued = false
+    if (被写体) render()
+  })
+}
+
+function render() {
+  const img = 被写体
+  if (!img) return
+
+  if (!canvasSized) {
+    canvas.width = img.width
+    canvas.height = img.height
+    canvasSized = true
+  }
+
+  const W = canvas.width, H = canvas.height
+  ctx.clearRect(0, 0, W, H)
+  ctx.drawImage(renderBg(W, H), 0, 0)
+
+  /* 被写体の描画（位置・回転・反転・スケール適用） */
+  const ratio = img.width / img.height
+  const maxDim = Math.min(W, H) * scale
+  const drawW = ratio > 1 ? maxDim : maxDim * ratio
+  const drawH = ratio > 1 ? maxDim / ratio : maxDim
+
+  ctx.save()
+  ctx.translate(posX * W, posY * H)
+  ctx.rotate(rotation * Math.PI / 180)
+  if (flipped) ctx.scale(-1, 1)
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH)
+  ctx.restore()
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   キャンバス操作（マウス＆タッチ）
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+let dragging = false, pinching = false
+let dragOriginX, dragOriginY, dragStartPosX, dragStartPosY
+let lastPinchDist, lastPinchAngle
+
+function canvasPos(e) {
+  const r = canvas.getBoundingClientRect()
+  return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }
+}
+
+/* マウス操作 */
+canvas.addEventListener('mousedown', e => {
+  dragging = true
+  const p = canvasPos(e)
+  dragOriginX = p.x; dragOriginY = p.y
+  dragStartPosX = posX; dragStartPosY = posY
+  canvas.style.cursor = 'grabbing'
+})
+window.addEventListener('mousemove', e => {
+  if (!dragging) return
+  const p = canvasPos(e)
+  posX = dragStartPosX + p.x - dragOriginX
+  posY = dragStartPosY + p.y - dragOriginY
+  scheduleRender()
+})
+window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab' })
+
+/* タッチ操作 */
+const touchDist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+const touchAngle = (a, b) => Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX) * 180 / Math.PI
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault()
+  if (e.touches.length === 2) {
+    pinching = true; dragging = false
+    lastPinchDist = touchDist(e.touches[0], e.touches[1])
+    lastPinchAngle = touchAngle(e.touches[0], e.touches[1])
+  } else if (e.touches.length === 1) {
+    dragging = true; pinching = false
+    const p = canvasPos(e.touches[0])
+    dragOriginX = p.x; dragOriginY = p.y
+    dragStartPosX = posX; dragStartPosY = posY
+  }
+}, { passive: false })
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault()
+  if (pinching && e.touches.length === 2) {
+    const dist = touchDist(e.touches[0], e.touches[1])
+    scale = Math.max(.05, Math.min(3, scale * dist / lastPinchDist))
+    scaleSlider.value = scale
+    lastPinchDist = dist
+
+    const angle = touchAngle(e.touches[0], e.touches[1])
+    rotation = ((rotation + angle - lastPinchAngle + 180) % 360) - 180
+    rotSlider.value = Math.round(rotation)
+    lastPinchAngle = angle
+    scheduleRender()
+  } else if (dragging && e.touches.length === 1) {
+    const p = canvasPos(e.touches[0])
+    posX = dragStartPosX + p.x - dragOriginX
+    posY = dragStartPosY + p.y - dragOriginY
+    scheduleRender()
+  }
+}, { passive: false })
+
+canvas.addEventListener('touchend', e => {
+  if (e.touches.length < 2) pinching = false
+  if (e.touches.length === 0) dragging = false
+})
+
+/* スライダー */
+scaleSlider.addEventListener('input', () => { scale = +scaleSlider.value; scheduleRender() })
+rotSlider.addEventListener('input', () => { rotation = +rotSlider.value; scheduleRender() })
+
+/* 反転 */
+$('flip-btn').addEventListener('click', () => { flipped = !flipped; scheduleRender() })
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   画像処理（リサイズ → 背景除去 → 合成）
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/** モバイルOOM対策：大きい画像を縮小 */
+function shrink(file, maxDim) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      if (img.width <= maxDim && img.height <= maxDim) return resolve(file)
+      const s = maxDim / Math.max(img.width, img.height)
+      const c = document.createElement('canvas')
+      c.width = Math.round(img.width * s)
+      c.height = Math.round(img.height * s)
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+      c.toBlob(b => b ? resolve(b) : reject(new Error('リサイズ失敗')), 'image/png')
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('画像読み込み失敗')) }
+    img.src = url
+  })
+}
+
+/** UI表示切り替え */
+function showPhase(phase) {
+  const upload = phase === 'upload'
+  const edit = phase === 'edit'
+  uploadArea.classList.toggle('hidden', !upload)
+  bgSection.classList.toggle('hidden', !upload)
+  bgsEl.classList.toggle('hidden', !upload)
+  preview.classList.toggle('hidden', upload)
+  processing.classList.toggle('hidden', edit || upload)
+  controls.classList.toggle('hidden', !edit)
+}
+
+async function processImage(file) {
+  showPhase('processing')
+  progressBar.style.width = '5%'
+
+  try {
+    progressText.textContent = '画像を準備中...'
+    progressBar.style.width = '10%'
+    const resized = await shrink(file, 1024)
+
+    progressText.textContent = '背景除去中...（初回は少し時間がかかります）'
+    const blob = await removeBackground(resized, {
+      progress: (key, cur, total) => {
+        if (key.includes('fetch')) {
+          progressText.textContent = 'モデルダウンロード中...'
+          progressBar.style.width = '20%'
+        } else if (key.includes('inference') && total) {
+          const pct = Math.round(cur / total * 100)
+          progressBar.style.width = (pct * .6 + 30) + '%'
+          progressText.textContent = `処理中... ${pct}%`
+        }
+      },
+    })
+
+    progressBar.style.width = '95%'
+    progressText.textContent = '合成中...'
+
+    const img = new Image()
+    const blobUrl = URL.createObjectURL(blob)
+    img.onload = () => {
+      被写体 = img
+      posX = .5; posY = .55; scale = .85; rotation = 0; flipped = false
+      scaleSlider.value = '0.85'; rotSlider.value = '0'
+      canvasSized = false
+      render()
+      showPhase('edit')
+      canvas.style.cursor = 'grab'
+      toast('✨ 宇宙猫、完成！')
+    }
+    img.onerror = () => { URL.revokeObjectURL(blobUrl); throw new Error('画像生成失敗') }
+    img.src = blobUrl
+  } catch (err) {
+    console.error(err)
+    const msg = err?.message ?? ''
+    if (msg.includes('memory') || msg.includes('alloc'))
+      progressText.textContent = 'メモリ不足です。小さい画像でお試しください。'
+    else if (msg.includes('network') || msg.includes('fetch'))
+      progressText.textContent = 'ネットワークエラーです。接続を確認してください。'
+    else
+      progressText.textContent = 'エラーが発生しました。もう一度お試しください。'
+    setTimeout(() => showPhase('upload'), 2500)
+  }
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   出力（保存・シェア・Xポスト）
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const toBlob = () => new Promise(r => canvas.toBlob(r, 'image/png'))
+const toFile = blob => new File([blob], 'space-cat.png', { type: 'image/png' })
+
+$('download-btn').addEventListener('click', async () => {
+  try {
+    const blob = await toBlob()
+    const file = toFile(blob)
+    if (navigator.share?.({ files: [file] }) && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Space Cat' })
+      return
+    }
+    const url = URL.createObjectURL(blob)
+    Object.assign(document.createElement('a'), { download: 'space-cat.png', href: url }).click()
+    URL.revokeObjectURL(url)
+  } catch (e) { if (e.name !== 'AbortError') console.error(e) }
+})
+
+$('share-btn').addEventListener('click', async () => {
+  try {
+    const blob = await toBlob()
+    const file = toFile(blob)
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Space Cat', text: '宇宙猫つくった！🌌 #SpaceCat' })
+    } else {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        toast('クリップボードにコピーしました')
+      } catch {
+        const url = URL.createObjectURL(blob)
+        Object.assign(document.createElement('a'), { download: 'space-cat.png', href: url }).click()
+        URL.revokeObjectURL(url)
+        toast('画像をダウンロードしました')
+      }
+    }
+  } catch (e) { if (e.name !== 'AbortError') console.error(e) }
+})
+
+$('tweet-btn').addEventListener('click', () => {
+  window.open(`https://x.com/intent/post?text=${encodeURIComponent('宇宙猫つくった！🌌\n\n#SpaceCat')}`, '_blank')
+})
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ユーティリティ
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+function toast(message) {
+  const el = document.createElement('div')
+  el.className = 'toast'
+  el.textContent = message
+  document.body.appendChild(el)
+  requestAnimationFrame(() => el.classList.add('show'))
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300) }, 2000)
+}
+
+$('reset-btn').addEventListener('click', () => {
+  if (!confirm('やり直しますか？')) return
+  被写体 = null
+  posX = .5; posY = .55; scale = .85; rotation = 0; flipped = false
+  scaleSlider.value = '0.85'; rotSlider.value = '0'
+  fileInput.value = ''; canvasSized = false
+  showPhase('upload')
+})
+</script>
+</body>
+</html>

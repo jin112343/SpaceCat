@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(*)",
+      "Write(*)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": [
+      "Bash(rm *)",
+      "Bash(git push*)",
+      "Bash(git reset*)"
+    ]
+  },
+  "customization": {
+    "outputStyle": "explanatory",
+    "autoCompactAtContextPercentage": 80
+  }
+}

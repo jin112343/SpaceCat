@@ -1,0 +1,11 @@
+{
+  "name": "space-cat",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "version": "1.0.0",
+  "description": "写真から「宇宙猫」風の画像を作れるWebアプリ",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "mkdir -p dist && cp index.html dist/ && cp -r public dist/"
+  }
+}
