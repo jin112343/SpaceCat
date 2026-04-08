@@ -535,8 +535,9 @@ function render() {
   if (!img) return
 
   if (!canvasSized) {
-    canvas.width = img.width
-    canvas.height = img.height
+    const maxW = Math.min(img.width, 1280)
+    canvas.width = maxW
+    canvas.height = Math.round(maxW * 9 / 16)
     canvasSized = true
   }
 
