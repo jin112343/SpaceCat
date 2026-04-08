@@ -707,8 +707,13 @@ async function processImage(file) {
     progressBar.style.width = '95%'
     progressText.textContent = '合成中...'
 
-    原画 = await createImageBitmap(blob)
-    被写体 = 原画
+    const bmp = await createImageBitmap(blob)
+    /* 原画をCanvasとして保持（アルファ閾値調整用） */
+    const origCanvas = document.createElement('canvas')
+    origCanvas.width = bmp.width; origCanvas.height = bmp.height
+    origCanvas.getContext('2d').drawImage(bmp, 0, 0)
+    原画 = origCanvas
+    被写体 = bmp
     posX = .5; posY = .55; scale = .85; rotation = 0; flipped = false; alphaThreshold = 0
     scaleSlider.value = '0.85'; rotSlider.value = '0'; alphaSlider.value = '0'
     canvasSized = false
